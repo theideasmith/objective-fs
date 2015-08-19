@@ -1,0 +1,17 @@
+{
+  "name": "builder",
+  "version": "0.0.1",
+  "description": "The builder for object builders",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "build",
+    "object",
+    "builder",
+    "chain"
+  ],
+  "author": "Akiva Lipshitz <aclscientist@gmail.com> (http://www.github.com/theideasmith)",
+  "license": "ISC"
+}
