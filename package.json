@@ -1,10 +1,10 @@
 {
-  "name": "builder",
+  "name": "objective-fs",
   "version": "0.0.1",
-  "description": "The builder for object builders",
-  "main": "index.js",
+  "description": "Bash filesystem commands on JS objects",
+  "main": "src/objective-fs.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/*"
   },
   "keywords": [
     "build",
@@ -13,5 +13,12 @@
     "chain"
   ],
   "author": "Akiva Lipshitz <aclscientist@gmail.com> (http://www.github.com/theideasmith)",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "^2.2.5",
+    "should": "^7.0.4"
+  },
+  "dependencies": {
+    "minimatch": "^2.0.10"
+  }
 }
