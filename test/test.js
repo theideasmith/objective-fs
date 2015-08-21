@@ -27,6 +27,11 @@ describe('objective-fs', function(){
     x: {
       y:{
         z: "abc"
+      },
+      a: {
+        b: 'c',
+        d: 'e',
+        f: 'g'
       }
     },
 
@@ -38,29 +43,48 @@ describe('objective-fs', function(){
 
   var datafs = ofs(data)
 
-  describe('cat', function(){
-    it ("should return the correct object given a deep path", function(){
-      datafs.cat('x/y/z').should.equal(data.x.y.z)
-      datafs.cat('DNA/0').should.equal(data.DNA[0])
+  describe('#cat', function(){
+    describe('should return the correct object given a path that', function(){
+
+      it('is syntactically correct', function(){
+        datafs.cat('~/x/y/z').should.equal(data.x.y.z)
+      })
+
+      it('is obscured by ./', function(){
+        datafs.cat('~/././././x/y/z').should.equal(data.x.y.z)
+      })
+
+      // it('is obscured by //////', function(){
+      //   datafs.cat('~//////x////y/z').should.equal(data.x.y.z)
+      // })
+
+      it('begins with nothing', function(){
+        datafs.cat('x/y/z').should.equal(data.x.y.z)
+      })
     })
 
-    it("should return the base object given an empty path and HOME ('~') path", function(){
-      Object.keys(datafs.cat('~')).equals(dataKeys).should.equal(true)
-      Object.keys(datafs.cat('')).equals(dataKeys).should.equal(true)
-
-    })
-
-    it("should fail when given an invalid path", function(){
-      testFailure(function(){
-        datafs.cat('./20/15')
-      }).should.equal(true)
-
-      testFailure(function(){
-        datafs.cat('./x/3')
-      }).should.equal(true)
-    })
+    // it("should return the base object given HOME ('~') path", function(){
+    //   Object.keys(datafs.cat('~')).equals(dataKeys).should.equal(true)
+    // })
+    //
+    // it("should fail when given an invalid path", function(){
+    //   testFailure(function(){
+    //     datafs.cat('./20/15')
+    //   }).should.equal(true)
+    //
+    //   testFailure(function(){
+    //     datafs.cat('./x/3')
+    //   }).should.equal(true)
+    // })
   })
 
-
-
+  describe('#cd', function(){
+    it('should navigate to a passed directory', function(){
+      var path = './x/a/'
+      var shouldEqual = data.x.a
+      datafs.cd(path)
+      datafs._pwd.should.equal(ofs.clean(path))
+      datafs.ls().should.deepEqual(shouldEqual)
+    })
+  })
 })

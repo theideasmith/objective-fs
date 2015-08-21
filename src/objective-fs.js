@@ -5,9 +5,19 @@ function Traverser(object, delimeter){
   self._currentObject = object
   self._homeObject = object
   self._delimeter = delimeter || Traverser.DELIMETER
-  this.cd(Traverser.HOME, object)
+
+  self.HOME = Traverser.ROOT
+  self.aliases = {
+    '~': self.HOME
+  }
+  self.cd(self.HOME, object)
 
 }
+
+Traverser.DELIMETER = '/'
+Traverser.ROOT = ''
+Traverser.SUPER_DIR = '..'
+Traverser.CURRENT_DIR = '.'
 
 Traverser.prototype = {
 
@@ -15,6 +25,7 @@ Traverser.prototype = {
   //through an object
   cd: function(path){
 
+    path = this.formatPath(path)
     var traverser = this
     traverser._currentDirectory = path
 
@@ -23,13 +34,7 @@ Traverser.prototype = {
 
     traverser._superdirectories = newDir.dirs
 
-    traverser._pwd = newDir
-        .searched
-        .splice(0,newDir.searched.length-1)
-        .reduce(function(p,c){
-          return p + '/' + c
-        }, newDir.searched.pop())
-
+    traverser._pwd = path
     return traverser
 
   },
@@ -41,6 +46,25 @@ Traverser.prototype = {
     return this._searchObject(path).dirs.pop()
   },
 
+  ls: function(){
+    return this._currentObject
+  },
+
+  alias: function(path){
+
+    return alias(path, this.aliases)
+
+  },
+
+  formatPath: function(path){
+    var ret = formatPath(path, this.aliases)
+    return ret
+  },
+
+  isRoot: function(path){
+    return isRoot(path, this.aliases)
+  },
+
   _super: function(){
     return this._superdirectories[this._superdirectories.length-2]
   },
@@ -49,38 +73,59 @@ Traverser.prototype = {
     return this._superdirectories[this._superdirectories.length-1]
   },
 
-  _searchObject: function(path, object, delimeter){
+  _resolvePath: function(path){
 
-    var object = this._currentObject
-    var delimeter = this._delimeter
+  },
 
-    if (!object) throw new Error(
-      "Cannot search " +
-       typeof object      +
-       " for path "    +
-       path.toString()
-     )
+  _baseDir: function(path){
+
+    var pathified = pathToArray(this.formatPath(path))
+
+    if(pathified[0] === '~')
+      return this._homeObject
+    else if (pathified[0] === Traverser.ROOT){
+      return this._homeObject
+    } else {
+      return this._currentObject
+    }
+
+  },
+
+  _searchObject: function(path){
 
     /*
      * This is what "cd" really does in bash.
      * Null input becomes '.'
      */
+    path = this.formatPath(path || '.')
 
-    if (path === null || path === undefined) path = '.'
 
-    if (isRoot(path)) return {
-      searched: ['~'],
-      dirs: [object]
-    }
+    var delimeter = this._delimeter
 
-    var pathified = splitPathToArray(path, delimeter)
+    /*
+     * After baseDir is resolved
+     */
+    var pathified = pathToArray(path, delimeter)
+    var searched = [pathified.shift()]
+    var dirs = [object]
 
-    var searched = []
-    var dirs = []
+    var object = this._baseDir(path)
+
+    if (!object) throw new Error(
+      "Cannot search " +
+       typeof object   +
+       " for path "    +
+       path.toString()
+    )
+
+    console.log('Pathified: ', pathified)
 
     var currObj = object
 
+
     while(directory = pathified.shift()){
+
+      directory = this.alias(directory)
 
       if (!(currObj instanceof Object) && (!currObj instanceof Array)){
         throw new Error("Invalid path given" +
@@ -100,7 +145,13 @@ Traverser.prototype = {
       if(x=parseInt(directory))
         directory = x
 
-      var target = currObj[directory]
+      var target
+      if(directory === Traverser.CURRENT_DIR)
+        target = currObj
+      else if(directory === '')
+        target = currObj
+      else
+        target = currObj[directory]
 
       if (!target){
         throw new Error(
@@ -120,48 +171,56 @@ Traverser.prototype = {
       searched: searched,
       dirs: dirs
     }
-  }
-}
+  },
 
-Traverser.DELIMETER = '/'
-Traverser.HOME = '~'
-Traverser.SUPER_DIR = '..'
-Traverser.CURRENT_DIR = '.'
-
-function isRoot(string){
-
-  if (string === null || string === undefined)
-    throw new Error("Cannot check null string for being ROOT")
-
-  return (string === Traverser.HOME) || (string.length === 0)
 
 }
 
-function splitPathToArray(string, delimeter){
-  return string.split(delimeter || Traverser.DELIMETER)
-}
-
-/*
- * For those idiots who waste
- * precious memory by doing
- * "././././././"
- * REDUDANTLY!
- */
-function removePathRedundancy(path){
-  path = path
-          .replace(/(\.\/)+/, './')  //  "./"
-          .replace(/(\.\.\/)+/,'../')// "../"
-
+function alias(path, aliases){
+  if ((aliases[path] !== undefined) &&
+      (aliases[path] !== null))
+        return aliases[path]
   return path
 }
 
+function cleanPath(path){
+  var s = path
+  path = path
+        .replace(/(\.\/)+/, '')  //  "./"
+        .replace(/\/+/, '/') // "//////" => '/'
+  return path
+}
 
-function traverse(object){
+function formatPath(path, aliases){
+  aliases = aliases || {}
+  path = pathToArray(cleanPath(path))
+        .map(function(dir){
+          return alias(dir, aliases)
+        })
+        .join(Traverser.DELIMETER)
+  return path
+}
+
+function isRoot(string, aliases){
+  aliases = aliases || {}
+  return string[0] === Traverser.ROOT
+
+}
+
+function pathToArray(string, delimeter){
+  var arr = string
+            .split(delimeter || Traverser.DELIMETER)
+  return arr
+}
+
+var traverse = function(object){
   if(object === null)
     throw new Error("Cannot use null object "+
                     "with Objective-Fs")
 
   return new Traverser(object)
 }
+
+traverse.clean = cleanPath
 
 module.exports = traverse
