@@ -54,28 +54,28 @@ describe('objective-fs', function(){
         datafs.cat('~/././././x/y/z').should.equal(data.x.y.z)
       })
 
-      // it('is obscured by //////', function(){
-      //   datafs.cat('~//////x////y/z').should.equal(data.x.y.z)
-      // })
+      it('is obscured by //////', function(){
+        datafs.cat('~//////x////y/z').should.equal(data.x.y.z)
+      })
 
       it('begins with nothing', function(){
         datafs.cat('x/y/z').should.equal(data.x.y.z)
       })
     })
 
-    // it("should return the base object given HOME ('~') path", function(){
-    //   Object.keys(datafs.cat('~')).equals(dataKeys).should.equal(true)
-    // })
-    //
-    // it("should fail when given an invalid path", function(){
-    //   testFailure(function(){
-    //     datafs.cat('./20/15')
-    //   }).should.equal(true)
-    //
-    //   testFailure(function(){
-    //     datafs.cat('./x/3')
-    //   }).should.equal(true)
-    // })
+    it("should return the base object given HOME ('~') path", function(){
+      Object.keys(datafs.cat('~')).equals(dataKeys).should.equal(true)
+    })
+
+    it("should fail when given an invalid path", function(){
+      testFailure(function(){
+        datafs.cat('./20/15')
+      }).should.equal(true)
+
+      testFailure(function(){
+        datafs.cat('./x/3')
+      }).should.equal(true)
+    })
   })
 
   describe('#cd', function(){

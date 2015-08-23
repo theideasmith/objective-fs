@@ -1,40 +1,39 @@
-var minimatch = require("minimatch");
+var minimatch = require("minimatch")
+var ppath = require("pretty-path")
 
-function Traverser(object, delimeter){
+
+function Traverser(object, options){
   var self = this
-  self._currentObject = object
   self._homeObject = object
-  self._delimeter = delimeter || Traverser.DELIMETER
-
-  self.HOME = Traverser.ROOT
-  self.aliases = {
-    '~': self.HOME
-  }
-  self.cd(self.HOME, object)
-
+  self._currentObject = object
+  self._options = options || Traverser.PPATH_OPTIONS
+  self.cd(self._options.home)
 }
 
-Traverser.DELIMETER = '/'
-Traverser.ROOT = ''
-Traverser.SUPER_DIR = '..'
-Traverser.CURRENT_DIR = '.'
+Traverser.PPATH_OPTIONS  = {
+  home: '/',
+  current_dir: '.',
+  super_dir: '..',
+  delimeter: '/',
+  root: '',
+  aliases: {
+    '~': ''
+  }
+}
 
 Traverser.prototype = {
 
   //Move up and down
   //through an object
   cd: function(path){
-
-    path = this.formatPath(path)
     var traverser = this
-    traverser._currentDirectory = path
 
-    var newDir = this._searchObject(path)
+    var newDir = traverser._searchObject(path)
+
     traverser._currentObject = newDir.dirs.pop()
+    traverser._pwd = newDir.path
 
-    traverser._superdirectories = newDir.dirs
 
-    traverser._pwd = path
     return traverser
 
   },
@@ -50,40 +49,18 @@ Traverser.prototype = {
     return this._currentObject
   },
 
-  alias: function(path){
-
-    return alias(path, this.aliases)
-
-  },
-
-  formatPath: function(path){
-    var ret = formatPath(path, this.aliases)
-    return ret
-  },
-
   isRoot: function(path){
     return isRoot(path, this.aliases)
   },
 
-  _super: function(){
-    return this._superdirectories[this._superdirectories.length-2]
-  },
-
-  _pwd: function(){
-    return this._superdirectories[this._superdirectories.length-1]
-  },
-
-  _resolvePath: function(path){
-
-  },
-
-  _baseDir: function(path){
-
-    var pathified = pathToArray(this.formatPath(path))
-
-    if(pathified[0] === '~')
+  _baseObject: function(path){
+    /*
+     * ~/path/to/object
+     */
+    var baseDir = this._baseDir(path)
+    if(baseDir[0] === '~'){
       return this._homeObject
-    else if (pathified[0] === Traverser.ROOT){
+    } else if (baseDir[0] === Traverser.ROOT){
       return this._homeObject
     } else {
       return this._currentObject
@@ -91,26 +68,21 @@ Traverser.prototype = {
 
   },
 
+  _baseDir: function(path){
+    var pathified = ppath.break(path)
+    return pathified[0]
+  },
+
   _searchObject: function(path){
-
     /*
-     * This is what "cd" really does in bash.
-     * Null input becomes '.'
+     * Using a handy module I wrote
      */
-    path = this.formatPath(path || '.')
+    path = ppath(path)
+    console.log("Searching path: ", path)
 
+    var iterable_path = ppath.break( path )
 
-    var delimeter = this._delimeter
-
-    /*
-     * After baseDir is resolved
-     */
-    var pathified = pathToArray(path, delimeter)
-    var searched = [pathified.shift()]
-    var dirs = [object]
-
-    var object = this._baseDir(path)
-
+    var object = this._baseObject(iterable_path.shift())
     if (!object) throw new Error(
       "Cannot search " +
        typeof object   +
@@ -118,14 +90,14 @@ Traverser.prototype = {
        path.toString()
     )
 
-    console.log('Pathified: ', pathified)
 
     var currObj = object
 
+    var stack = [object]
+    var directory
 
-    while(directory = pathified.shift()){
-
-      directory = this.alias(directory)
+    do {
+      directory = iterable_path.shift()
 
       if (!(currObj instanceof Object) && (!currObj instanceof Array)){
         throw new Error("Invalid path given" +
@@ -139,19 +111,24 @@ Traverser.prototype = {
        * arrays as well as strings
        *
        * When directory is NaN, the assignment
-       * will not be mad
+       * will not be made
        */
 
       if(x=parseInt(directory))
         directory = x
 
       var target
-      if(directory === Traverser.CURRENT_DIR)
-        target = currObj
-      else if(directory === '')
-        target = currObj
-      else
+      if (directory === Traverser.PPATH_OPTIONS.super_dir){
+        var temp = stack.pop()
+        target = temp
+      } else if (directory === '') {
+        // for '/' or other cases where .split returns ['', '', ...]
+        // save computation for computing and removing duplicates
+       target = currObj
+      } else {
         target = currObj[directory]
+        stack.push(target)
+      }
 
       if (!target){
         throw new Error(
@@ -163,54 +140,15 @@ Traverser.prototype = {
 
       currObj = target
 
-      searched.push(directory.toString())
-      dirs.push(target)
-    }
+    } while(iterable_path.length > 0)
 
     return {
-      searched: searched,
-      dirs: dirs
+      path: path,
+      dirs: stack
     }
   },
 
 
-}
-
-function alias(path, aliases){
-  if ((aliases[path] !== undefined) &&
-      (aliases[path] !== null))
-        return aliases[path]
-  return path
-}
-
-function cleanPath(path){
-  var s = path
-  path = path
-        .replace(/(\.\/)+/, '')  //  "./"
-        .replace(/\/+/, '/') // "//////" => '/'
-  return path
-}
-
-function formatPath(path, aliases){
-  aliases = aliases || {}
-  path = pathToArray(cleanPath(path))
-        .map(function(dir){
-          return alias(dir, aliases)
-        })
-        .join(Traverser.DELIMETER)
-  return path
-}
-
-function isRoot(string, aliases){
-  aliases = aliases || {}
-  return string[0] === Traverser.ROOT
-
-}
-
-function pathToArray(string, delimeter){
-  var arr = string
-            .split(delimeter || Traverser.DELIMETER)
-  return arr
 }
 
 var traverse = function(object){
@@ -220,7 +158,5 @@ var traverse = function(object){
 
   return new Traverser(object)
 }
-
-traverse.clean = cleanPath
-
+traverse.clean = ppath
 module.exports = traverse

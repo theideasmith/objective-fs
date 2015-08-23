@@ -19,6 +19,7 @@
     "should": "^7.0.4"
   },
   "dependencies": {
-    "minimatch": "^2.0.10"
+    "minimatch": "^2.0.10",
+    "pretty-path": "file:../pretty-path"
   }
 }
