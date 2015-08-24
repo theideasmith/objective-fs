@@ -44,37 +44,41 @@ describe('objective-fs', function(){
   var datafs = ofs(data)
 
   describe('#cat', function(){
-    describe('should return the correct object given a path that', function(){
 
-      it('is syntactically correct', function(){
-        datafs.cat('~/x/y/z').should.equal(data.x.y.z)
-      })
+    it("should return the correct object given a regular path", function(){
+      datafs.cat('x/y/z').should.equal(data.x.y.z)
+    })
 
-      it('is obscured by ./', function(){
-        datafs.cat('~/././././x/y/z').should.equal(data.x.y.z)
-      })
+    it("should return the correct object for a root path", function(){
+      datafs.cat('/x/y/z').should.equal(data.x.y.z)
+    })
 
-      it('is obscured by //////', function(){
-        datafs.cat('~//////x////y/z').should.equal(data.x.y.z)
-      })
-
-      it('begins with nothing', function(){
-        datafs.cat('x/y/z').should.equal(data.x.y.z)
-      })
+    it("should return the correct object given an array index", function(){
+      datafs.cat('/DNA/0/').should.equal(data.DNA[0])
     })
 
     it("should return the base object given HOME ('~') path", function(){
       Object.keys(datafs.cat('~')).equals(dataKeys).should.equal(true)
     })
 
-    it("should fail when given an invalid path", function(){
-      testFailure(function(){
-        datafs.cat('./20/15')
-      }).should.equal(true)
+    it("should return the correct object with superdirectories", function(){
+      datafs.cat('/x/y/../../DNA/0').should.equal('ACT')
+    })
 
-      testFailure(function(){
-        datafs.cat('./x/3')
-      }).should.equal(true)
+    describe("failures", function(){
+      it("should fail upon hitting an invalid superdirectory", function(){
+        testFailure(function(){datafs.cat('/x/y/../../../')}).should.equal(true)
+      })
+
+      it("should fail when given an invalid path", function(){
+        testFailure(function(){
+          datafs.cat('./20/15')
+        }).should.equal(true)
+
+        testFailure(function(){
+          datafs.cat('./x/3')
+        }).should.equal(true)
+      })
     })
   })
 

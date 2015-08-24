@@ -78,7 +78,6 @@ Traverser.prototype = {
      * Using a handy module I wrote
      */
     path = ppath(path)
-    console.log("Searching path: ", path)
 
     var iterable_path = ppath.break( path )
 
@@ -119,13 +118,17 @@ Traverser.prototype = {
 
       var target
       if (directory === Traverser.PPATH_OPTIONS.super_dir){
+        // console.log("STACK: ", stack)
+        stack.pop()
         var temp = stack.pop()
+        stack.push(temp)
         target = temp
       } else if (directory === '') {
         // for '/' or other cases where .split returns ['', '', ...]
         // save computation for computing and removing duplicates
        target = currObj
       } else {
+        // console.log("directory: ", directory)
         target = currObj[directory]
         stack.push(target)
       }
@@ -142,6 +145,7 @@ Traverser.prototype = {
 
     } while(iterable_path.length > 0)
 
+    // console.log(stack)
     return {
       path: path,
       dirs: stack
