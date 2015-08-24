@@ -64,15 +64,12 @@ describe('objective-fs', function() {
     })
 
     it("should create the correct stack for a superdirectory path", function() {
-
       testStack("/x/y/../../DNA/0", [
         data,
         data.DNA,
         data.DNA[0]
       ])
-
     })
-
   })
 
   describe('#cat', function() {
@@ -95,9 +92,11 @@ describe('objective-fs', function() {
 
     it("should return the correct object with superdirectories", function() {
       datafs.cat('/x/y/../../DNA/0').should.equal('ACT')
+
     })
 
     describe("failures", function() {
+
       it("should fail upon hitting an invalid superdirectory", function() {
         testFailure(function() {
           datafs.cat('/x/y/../../../')
@@ -113,6 +112,12 @@ describe('objective-fs', function() {
           datafs.cat('./x/3')
         }).should.equal(true)
       })
+
+      // it("should fail when asked to search through invalid object types", function(){
+      //   testFailure(function(){
+      //     datafs.cat('/20/15/')
+      //   }).should.equal(true)
+      // })
     })
   })
 
