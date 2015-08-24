@@ -92,7 +92,6 @@ describe('objective-fs', function() {
 
     it("should return the correct object with superdirectories", function() {
       datafs.cat('/x/y/../../DNA/0').should.equal('ACT')
-
     })
 
     describe("failures", function() {
@@ -113,11 +112,12 @@ describe('objective-fs', function() {
         }).should.equal(true)
       })
 
-      // it("should fail when asked to search through invalid object types", function(){
-      //   testFailure(function(){
-      //     datafs.cat('/20/15/')
-      //   }).should.equal(true)
-      // })
+      it("should fail when asked to search through invalid object types", function(){
+        testFailure(function(){
+          datafs.cat('/20/15/')
+        }).should.equal(true)
+      })
+
     })
   })
 

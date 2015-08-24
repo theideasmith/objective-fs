@@ -2,23 +2,11 @@ var minimatch = require("minimatch")
 var ppath = require("pretty-path")
 
 
-function Traverser(object, options){
+function Traverser(object){
   var self = this
   self._rootObject = object
   self._currentObject = object
-  self._options = options || Traverser.PPATH_OPTIONS
-  self.cd(self._options.home)
-}
-
-Traverser.PPATH_OPTIONS  = {
-  home: '/',
-  current_dir: '.',
-  super_dir: '..',
-  delimeter: '/',
-  root: '',
-  aliases: {
-    '~': ''
-  }
+  self.cd('~')
 }
 
 Traverser.prototype = {
@@ -111,16 +99,19 @@ Traverser.prototype = {
          * will not be made
 
          * Of course, only use indices if the object
-         * is an array
+         * is an array, right?
+
+         * This might change, but for now, only arrays
+         * supports indices
          */
-        if(x=parseInt(directory) && currObj instanceof Array)
+        if(x=parseInt(directory) &&
+          currObj instanceof Array)
           directory = x
 
         var target
-        if (directory === Traverser.PPATH_OPTIONS.super_dir){
+        if (directory === '..'){
           stack.pop()
-          var temp = stack[stack.length-1]
-          target = temp
+          target = stack[stack.length-1]
         } else {
           target = currObj[directory]
           stack.push(target)
@@ -137,17 +128,13 @@ Traverser.prototype = {
         currObj = target
       }
 
-
-
     } while(iterable_path.length > 0)
 
     return {
       path: path,
       dirs: stack
     }
-  },
-
-
+  }
 }
 
 var traverse = function(object){
