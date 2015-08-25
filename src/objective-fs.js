@@ -2,6 +2,29 @@ var minimatch = require("minimatch")
 var ppath = require("pretty-path")
 
 
+function resolveToRoot(root, relative){
+
+  //So the paths are easier to work with
+  var rootbreak = ppath.break(root)
+  var relbreak = ppath.break(relative)
+
+  
+
+}
+
+function resolvePaths(){
+  var paths = Array
+              .prototype
+              .slice
+              .call(arguments,0)
+              .map(ppath)
+
+
+
+
+
+}
+
 function Traverser(object){
   var self = this
   self._rootObject = object
@@ -19,7 +42,7 @@ Traverser.prototype = {
     var _search = traverser._searchObject(path)
 
     traverser._currentObject = _search.dirs[_search.dirs.length-1]
-    traverser._pwd = _search.path
+    traverser.env('pwd', _search.path)
     traverser._stack = _search.dirs
 
     return traverser
@@ -35,6 +58,16 @@ Traverser.prototype = {
 
   ls: function(){
     return this._currentObject
+  },
+
+  env: function(variable, setTo){
+    if(this._env === null || this._env === undefined) this._env = {}
+    if(variable === null || variable === undefined)
+      return this._env
+
+    if(setTo!== null && setTo !== undefined) this._env[variable] = setTo
+    return this._env[variable]
+
   },
 
   isRoot: function(path){
@@ -61,19 +94,16 @@ Traverser.prototype = {
      */
 
     //Prettifying
-    var path = ppath(path)
-
+    var path = ppath(path || '~')
     //Iterable path can be iterated through
     //for navigation
     var iterable_path = ppath.break( path )
-
     //Stack represents the stack of directories
     //Allowing superdirectories to be used
     var stack = this._startingStackFor( iterable_path.shift() )
 
     //The starting object
     var currObj = stack[stack.length-1]
-
     var directory
     do {
       directory = iterable_path.shift()
@@ -112,6 +142,9 @@ Traverser.prototype = {
         if (directory === '..'){
           stack.pop()
           target = stack[stack.length-1]
+        } else if(directory === '.'){
+          target = currObj
+          stack.push(target)
         } else {
           target = currObj[directory]
           stack.push(target)
@@ -122,7 +155,7 @@ Traverser.prototype = {
             "Given path " +
             path +
             " does not exist in object " +
-            JSON.stringify(object))
+            JSON.stringify(currObj))
         }
 
         currObj = target

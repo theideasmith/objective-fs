@@ -74,6 +74,10 @@ describe('objective-fs', function() {
 
   describe('#cat', function() {
 
+    it("should navigate to the base object given a null path", function() {
+      Object.keys(datafs.cat()).equals(dataKeys).should.equal(true)
+    })
+
     it("should return the correct object given a regular path", function() {
       datafs.cat('x/y/z').should.equal(data.x.y.z)
     })
@@ -112,12 +116,11 @@ describe('objective-fs', function() {
         }).should.equal(true)
       })
 
-      it("should fail when asked to search through invalid object types", function(){
-        testFailure(function(){
+      it("should fail when asked to search through invalid object types", function() {
+        testFailure(function() {
           datafs.cat('/20/15/')
         }).should.equal(true)
       })
-
     })
   })
 
@@ -126,8 +129,18 @@ describe('objective-fs', function() {
       var path = './x/a/'
       var shouldEqual = data.x.a
       datafs.cd(path)
-      datafs._pwd.should.equal(ofs.clean(path))
+      datafs.env('pwd').should.equal(ofs.clean(path))
       datafs.ls().should.deepEqual(shouldEqual)
+    })
+    it('should navigate to superdirectories', function(){
+      var path = '../../DNA'
+      datafs.cd(path).ls().should.deepEqual(data.DNA)
+      datafs.env('pwd').should.equal('/DNA')
+    })
+    it("should fail when navigating to invalid superdirectory", function(){
+      testFailure(function(){
+        datafs.cd('../../')
+      }).should.equal(true)
     })
   })
 })
