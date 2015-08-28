@@ -43,10 +43,10 @@ describe('objective-fs', function() {
 
   var datafs = ofs(data)
 
-  describe("#_searchObject", function() {
+  describe("#_get", function() {
 
     function testStack(path, shouldStack) {
-      var stack = datafs._searchObject(path).dirs
+      var stack = datafs._get(path).dirs
 
       stack.forEach(function(obj, ind) {
         obj.should.deepEqual(shouldStack[ind])
@@ -75,7 +75,15 @@ describe('objective-fs', function() {
   describe('#cat', function() {
 
     it("should navigate to the base object given a null path", function() {
-      Object.keys(datafs.cat()).equals(dataKeys).should.equal(true)
+      datafs.cat().should.deepEqual(data)
+    })
+
+    it("should navigate to the base object given an empty path", function() {
+      datafs.cat('').should.deepEqual(data)
+    })
+
+    it("should navigate to the base object given a base path", function() {
+      datafs.cat('/').should.deepEqual(data)
     })
 
     it("should return the correct object given a regular path", function() {
@@ -101,25 +109,15 @@ describe('objective-fs', function() {
     describe("failures", function() {
 
       it("should fail upon hitting an invalid superdirectory", function() {
-        testFailure(function() {
-          datafs.cat('/x/y/../../../')
-        }).should.equal(true)
+          should(datafs.cat('/x/y/../../../')).equal(undefined)
       })
 
-      it("should fail when given an invalid path", function() {
-        testFailure(function() {
-          datafs.cat('./20/15')
-        }).should.equal(true)
-
-        testFailure(function() {
-          datafs.cat('./x/3')
-        }).should.equal(true)
+      it("should return null when given an invalid path", function() {
+          should(datafs.cat('./x/3')).equal(undefined)
       })
 
       it("should fail when asked to search through invalid object types", function() {
-        testFailure(function() {
-          datafs.cat('/20/15/')
-        }).should.equal(true)
+          should(datafs.cat('/20/15/')).equal(undefined)
       })
     })
   })
@@ -142,5 +140,17 @@ describe('objective-fs', function() {
         datafs.cd('../../')
       }).should.equal(true)
     })
+  })
+
+  describe('#touch', function(){
+
+    var object = ofs()
+
+    it("should create objects given a path", function(){
+      object.touch('/hello/', 'world')
+      object.cat('/hello/').should.equal('world')
+
+    })
+
   })
 })
