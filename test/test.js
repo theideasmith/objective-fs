@@ -126,7 +126,7 @@ describe('objective-fs', function() {
 
   describe('#cd', function() {
     it('should navigate to a passed directory', function() {
-      var path = './x/a/'
+      var path = '/x/a'
       var shouldEqual = data.x.a
       datafs.cd(path)
       datafs.env('pwd').should.equal(ofs.clean(path))

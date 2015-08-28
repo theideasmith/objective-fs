@@ -1,31 +1,7 @@
 var minimatch = require("minimatch")
 var ppath = require("pretty-path")
 
-
-function resolveToRoot(root, relative){
-
-  //So the paths are easier to work with
-  var rootbreak = ppath.break(root)
-  var relbreak = ppath.break(relative)
-
-  
-
-}
-
-function resolvePaths(){
-  var paths = Array
-              .prototype
-              .slice
-              .call(arguments,0)
-              .map(ppath)
-
-
-
-
-
-}
-
-function Traverser(object){
+function Traverser(object) {
   var self = this
   self._rootObject = object
   self._currentObject = object
@@ -36,14 +12,25 @@ Traverser.prototype = {
 
   //Move up and down
   //through an object
-  cd: function(path){
+  cd: function(path) {
+
     var traverser = this
 
     var _search = traverser._searchObject(path)
-
-    traverser._currentObject = _search.dirs[_search.dirs.length-1]
-    traverser.env('pwd', _search.path)
+    traverser._currentObject = _search.dirs[_search.dirs.length - 1]
     traverser._stack = _search.dirs
+
+
+    if(traverser.env('pwd') === null)
+      traverser.env('pwd', _search.path)
+    else
+      traverser.env('pwd',
+        ppath.resolve(
+            traverser.env('pwd'),
+            _search.path
+        )
+      )
+
 
     return traverser
 
@@ -51,43 +38,43 @@ Traverser.prototype = {
 
   //Gives you the contents
   //of path
-  cat: function(path){
+  cat: function(path) {
     var traverser = this
     return this._searchObject(path).dirs.pop()
   },
 
-  ls: function(){
+  ls: function() {
     return this._currentObject
   },
 
-  env: function(variable, setTo){
-    if(this._env === null || this._env === undefined) this._env = {}
-    if(variable === null || variable === undefined)
+  env: function(variable, setTo) {
+    if (this._env === null || this._env === undefined) this._env = {}
+    if (variable === null || variable === undefined)
       return this._env
 
-    if(setTo!== null && setTo !== undefined) this._env[variable] = setTo
+    if (setTo !== null && setTo !== undefined) this._env[variable] = setTo
     return this._env[variable]
 
   },
 
-  isRoot: function(path){
+  isRoot: function(path) {
     return isRoot(path, this.aliases)
   },
 
-  _startingStackFor: function(baseDir){
+  _startingStackFor: function(baseDir) {
 
     //If it is root, return root object
-    if (baseDir === ''){
+    if (baseDir === '') {
       return [this._rootObject]
     } else {
       //A new array -
       //to prevent modifying the original
-      var n  = [].concat(this._stack)
+      var n = [].concat(this._stack)
       return n
     }
   },
 
-  _searchObject: function(path){
+  _searchObject: function(path) {
 
     /*
      * Using a handy module I wrote
@@ -95,29 +82,29 @@ Traverser.prototype = {
 
     //Prettifying
     var path = ppath(path || '~')
-    //Iterable path can be iterated through
-    //for navigation
-    var iterable_path = ppath.break( path )
-    //Stack represents the stack of directories
-    //Allowing superdirectories to be used
-    var stack = this._startingStackFor( iterable_path.shift() )
+      //Iterable path can be iterated through
+      //for navigation
+    var iterable_path = ppath.break(path)
+      //Stack represents the stack of directories
+      //Allowing superdirectories to be used
+    var stack = this._startingStackFor(iterable_path.shift())
 
     //The starting object
-    var currObj = stack[stack.length-1]
+    var currObj = stack[stack.length - 1]
     var directory
     do {
       directory = iterable_path.shift()
 
-      if(directory !== ''){
+      if (directory !== '') {
 
         //Making sure you are searching through objects
         //and arrays only: No string, numbers, etc.
         if (!(currObj instanceof Object) &&
-            !(currObj instanceof Array)){
+          !(currObj instanceof Array)) {
           throw new Error("Invalid path given. " +
-                          "Can only search for path in" +
-                           " arrays or objects, not: " +
-                           typeof currObj)
+            "Can only search for path in" +
+            " arrays or objects, not: " +
+            typeof currObj)
         }
 
         /*
@@ -134,15 +121,15 @@ Traverser.prototype = {
          * This might change, but for now, only arrays
          * supports indices
          */
-        if(x=parseInt(directory) &&
+        if (x = parseInt(directory) &&
           currObj instanceof Array)
           directory = x
 
         var target
-        if (directory === '..'){
+        if (directory === '..') {
           stack.pop()
-          target = stack[stack.length-1]
-        } else if(directory === '.'){
+          target = stack[stack.length - 1]
+        } else if (directory === '.') {
           target = currObj
           stack.push(target)
         } else {
@@ -150,7 +137,7 @@ Traverser.prototype = {
           stack.push(target)
         }
 
-        if (!target){
+        if (!target) {
           throw new Error(
             "Given path " +
             path +
@@ -161,7 +148,7 @@ Traverser.prototype = {
         currObj = target
       }
 
-    } while(iterable_path.length > 0)
+    } while (iterable_path.length > 0)
 
     return {
       path: path,
@@ -170,12 +157,13 @@ Traverser.prototype = {
   }
 }
 
-var traverse = function(object){
-  if(object === null)
-    throw new Error("Cannot use null object "+
-                    "with Objective-Fs")
+var traverse = function(object) {
+  if (object === null)
+    throw new Error("Cannot use null object " +
+      "with Objective-Fs")
 
   return new Traverser(object)
 }
+
 traverse.clean = ppath
 module.exports = traverse
