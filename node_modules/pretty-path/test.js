@@ -67,7 +67,7 @@ describe('Pretty-path', function() {
   describe("formatPath", function(){
     it("should correctly format paths", function() {
 
-      Object.keys(paths).forEach(function(path) {
+      for (var path in paths) {
 
         var shouldEql = paths[path]
 
@@ -78,7 +78,7 @@ describe('Pretty-path', function() {
 
         pped.should.equal(shouldEql)
 
-      })
+      }
     })
 
     it("should format null and undefined as root ", function(){
@@ -101,30 +101,50 @@ describe('Pretty-path', function() {
     })
 
     it("should fail upon receiving relative path as root", function(){
-      shouldFail(ppath.resolve.bind('x/y/z'))
+      shouldFail(ppath.resolve.bind(this, 'x/y/z'))
       shouldFail(ppath.resolve)
     })
   })
 
-  describe("break", function(){
-    var shoulds = {
+  describe("break and join", function(){
+    var shouldBreaks = {
       '':[''],
       '/':[''],
       'x/y/z': ['x','y','z'],
       '/x/y/z':['','x','y','z']
     }
 
-    it("should break paths correctly", function(){
-      Object.keys(shoulds).forEach(function(path) {
+    var shouldJoins = {
+      '/':[''],
+      '/':['/'],
+      '/':[],
+      'x/y/z': ['x','y','z','/'],
+      'x/y/z': ['x','y','z'],
+      '/x/y/z':['','x','y','z']
+    }
 
-        var shouldEql = shoulds[path]
+    it("should break paths correctly", function(){
+      for (var path in shouldBreaks) {
+        var shouldEql = shouldBreaks[path]
 
         //This just tests that a passed options doesn't cause any failures
-        var pped = ppath.break(path)
+        var broken = ppath.break(path)
         console.log("     ", path, " --> ", shouldEql)
-        pped.should.deepEqual(shouldEql)
-      })
+        broken.should.deepEqual(shouldEql)
+      }
     })
 
+    it("should join paths correctly", function(){
+
+      for (var path in shouldJoins) {
+        var shouldEql = path
+
+        //This just tests that a passed options doesn't cause any failures
+        var joined = ppath.join(shouldJoins[path])
+        console.log("     ", shouldJoins[path], " --> ", shouldEql )
+        joined.should.equal(shouldEql)
+      }
+
+    })
   })
 })

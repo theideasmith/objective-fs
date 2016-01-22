@@ -42,7 +42,6 @@ describe('objective-fs', function() {
   var dataKeys = Object.keys(data)
 
   var datafs = ofs(data)
-
   describe("#_get", function() {
 
     function testStack(path, shouldStack) {

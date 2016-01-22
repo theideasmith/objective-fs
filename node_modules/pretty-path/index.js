@@ -79,11 +79,12 @@ function joinPaths(_paths){
   var paths = ensureArray(_paths)
   var joined
 
-  if((paths[0] === options.root) &&
-     (paths.length === 0))
+  if(((paths[0] === options.root) && (paths.length === 1))
+      || (paths.length === 0)){
     joined = options.delimeter
-  else
+  } else {
     joined = paths.join(options.delimeter)
+  }
 
   return cleanPath(joined)
 }

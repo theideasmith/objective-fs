@@ -2,14 +2,10 @@ var minimatch = require("minimatch")
 var ppath = require("pretty-path")
 
 function Traverser(object) {
-  var self = this
-  self._rootObject = object
-  self._currentObject = object
-  self.cd('~')
+  this._reset(object)
 }
 
 Traverser.prototype = {
-
   //Move up and down
   //through an object
   cd: function(path) {
@@ -32,7 +28,7 @@ Traverser.prototype = {
       )
 
     if(traverser._currentObject === undefined) {
-      throw new Error("Directory does not exist: ", traverser.path)
+      throw new Error("cd: No such file or directory", traverser.path)
     }
 
     return traverser
@@ -54,7 +50,7 @@ Traverser.prototype = {
 
     if((iterable.length===1) &&
         ppath.isRoot(iterable[0])){
-          throw new Error("Cannot replace base object")
+          this._reset(object)
     }
 
     var objName = iterable.pop()
@@ -64,22 +60,8 @@ Traverser.prototype = {
 
     if(!obj)
       baseDir[objName] = object
-  },
 
-  echo: function(pathOfNewObject, object){
-    var iterable = ppath.break(ppath(pathOfNewObject))
-
-    if((iterable.length===1) &&
-        ppath.isRoot(iterable[0])){
-          throw new Error("Cannot replace base object")
-    }
-
-    var objName = iterable.pop()
-    var baseDirName = ppath.join(iterable)
-    var baseDir = this.cat(baseDirName)
-    var obj = baseDir[objName]
-
-    baseDir[objName] = object
+    return this
   },
 
   env: function(variable, setTo) {
@@ -89,7 +71,8 @@ Traverser.prototype = {
 
     if (variable === null ||
         variable === undefined)
-      return this._env
+        //So the actual env can't be modified
+      return Object.create(this._env)
 
     if (setTo !== null &&
         setTo !== undefined)
@@ -99,8 +82,11 @@ Traverser.prototype = {
 
   },
 
-  isRoot: function(path) {
-    return isRoot(path, this.aliases)
+  _reset: function(object){
+    var self = this
+    self._rootObject = object
+    self._currentObject = object
+    self.cd('~')
   },
 
   _startingStackFor: function(baseDir) {
@@ -138,7 +124,13 @@ Traverser.prototype = {
 }
 
 Traverser.searchObject = function(iterable_path, stack) {
-  stack = stack || []
+
+  if(!stack){
+
+    throw new Error("Cannot search for object with null path")
+
+  }
+
   iterable_path = iterable_path || []
   //The starting object
   var currObj = stack[stack.length - 1]
